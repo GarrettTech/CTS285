@@ -34,3 +34,7 @@ start installing requirments:
 
 now we can write our minimal flask app to test it 
 TODO: write a flask app that does something useful
+
+to start:
+ - flask --app hello run
+ 
