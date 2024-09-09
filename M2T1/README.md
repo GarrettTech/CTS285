@@ -8,3 +8,5 @@ goals:
  ## lessons learned
 
  ## instructions 
+ initial tutorial: https://blog.pythonanywhere.com/121/
+ 
