@@ -30,3 +30,7 @@ bash commands you cannot live without:
 start installing requirments:
  - pip install flask
  - pip freeze > requirements.txt
+
+
+now we can write our minimal flask app to test it 
+TODO: write a flask app that does something useful
