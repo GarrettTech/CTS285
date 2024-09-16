@@ -37,3 +37,5 @@ TODO: write a flask app that does something useful
 
 to start:
  - flask --debug --app hello run
+ - cd M2T1
+ - sour
