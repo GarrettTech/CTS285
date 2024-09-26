@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python-Controlled Calculator</title>
+    <style>
+        /* ... (keep the same CSS as before) ... */
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <div id="question-display">Enter a question</div>
+        <input type="text" id="display" readonly>
+        <div class="buttons">
+            <button onclick="sendInput('7')">7</button>
+            <button onclick="sendInput('8')">8</button>
+            <button onclick="sendInput('9')">9</button>
+            <button onclick="sendInput('+')">+</button>
+            <button onclick="sendInput('4')">4</button>
+            <button onclick="sendInput('5')">5</button>
+            <button onclick="sendInput('6')">6</button>
+            <button onclick="sendInput('-')">-</button>
+            <button onclick="sendInput('1')">1</button>
+            <button onclick="sendInput('2')">2</button>
+            <button onclick="sendInput('3')">3</button>
+            <button onclick="sendInput('*')">*</button>
+            <button onclick="sendInput('0')">0</button>
+            <button onclick="sendInput('.')">.</button>
+            <button onclick="sendInput('/')">/</button>
+            <button onclick="sendInput('clear')">Clear</button>
+            <button id="enter" onclick="sendInput('enter')">Enter</button>
+            <button id="next" onclick="sendInput('next')" disabled>Next</button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function sendInput(value) {
+            fetch('/input', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({input: value}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('display').value = data.display;
+                document.getElementById('question-display').innerText = data.question;
+                document.getElementById('result').innerText = data.result;
+                document.getElementById('next').disabled = !data.next_enabled;
+            });
+        }
+    </script>
+</body>
+</html>
