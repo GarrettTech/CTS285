@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python-Controlled Calculator</title>
+    <title>Python-Controlled Calculator with Memory Bank</title>
     <style>
-       body {
+        body {
             font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
@@ -16,7 +16,7 @@
         }
         .calculator-container {
             background-color: #fff;
-            border-radius: 10px;
+            border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             padding: 20px;
             width: 300px;
@@ -70,33 +70,76 @@
             text-align: center;
             font-weight: bold;
         }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
     </style>
 </head>
 <body>
     <div class="calculator-container">
-        <div id="question-display">Enter a question</div>
-        <input type="text" id="display" readonly>
-        <div class="buttons">
-            <button onclick="sendInput('7')">7</button>
-            <button onclick="sendInput('8')">8</button>
-            <button onclick="sendInput('9')">9</button>
-            <button onclick="sendInput('+')">+</button>
-            <button onclick="sendInput('4')">4</button>
-            <button onclick="sendInput('5')">5</button>
-            <button onclick="sendInput('6')">6</button>
-            <button onclick="sendInput('-')">-</button>
-            <button onclick="sendInput('1')">1</button>
-            <button onclick="sendInput('2')">2</button>
-            <button onclick="sendInput('3')">3</button>
-            <button onclick="sendInput('*')">*</button>
-            <button onclick="sendInput('0')">0</button>
-            <button onclick="sendInput('.')">.</button>
-            <button onclick="sendInput('/')">/</button>
-            <button onclick="sendInput('clear')">Clear</button>
-            <button id="enter" onclick="sendInput('enter')">Enter</button>
-            <button id="next" onclick="sendInput('next')" disabled>Next</button>
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'Calculator')">Calculator</button>
+            <button class="tablinks" onclick="openTab(event, 'MemoryBank')">Memory Bank</button>
         </div>
-        <div id="result"></div>
+
+        <div id="Calculator" class="tabcontent">
+            <div id="question-display">Enter a question</div>
+            <input type="text" id="display" readonly>
+            <div class="buttons">
+                <button onclick="sendInput('7')">7</button>
+                <button onclick="sendInput('8')">8</button>
+                <button onclick="sendInput('9')">9</button>
+                <button onclick="sendInput('+')">+</button>
+                <button onclick="sendInput('4')">4</button>
+                <button onclick="sendInput('5')">5</button>
+                <button onclick="sendInput('6')">6</button>
+                <button onclick="sendInput('-')">-</button>
+                <button onclick="sendInput('1')">1</button>
+                <button onclick="sendInput('2')">2</button>
+                <button onclick="sendInput('3')">3</button>
+                <button onclick="sendInput('*')">*</button>
+                <button onclick="sendInput('0')">0</button>
+                <button onclick="sendInput('.')">.</button>
+                <button onclick="sendInput('/')">/</button>
+                <button onclick="sendInput('clear')">Clear</button>
+                <button id="enter" onclick="sendInput('enter')">Enter</button>
+                <button id="next" onclick="sendInput('next')" disabled>Next</button>
+            </div>
+            <div id="result"></div>
+        </div>
+
+        <div id="MemoryBank" class="tabcontent">
+            <h3>Memory Bank</h3>
+            <input type="text" id="memory-question" placeholder="Enter a question">
+            <button onclick="addToMemory()">Add to Memory</button>
+            <button onclick="clearMemory()">Clear Memory</button>
+            <button onclick="startMemoryMode()">Start Memory Mode</button>
+            <button onclick="stopMemoryMode()">Stop Memory Mode</button>
+            <div id="memory-status"></div>
+        </div>
     </div>
 
     <script>
@@ -114,8 +157,101 @@
                 document.getElementById('question-display').innerText = data.question;
                 document.getElementById('result').innerText = data.result;
                 document.getElementById('next').disabled = !data.next_enabled;
+                updateMemoryModeUI(data.memory_mode);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerText = 'Error communicating with server';
             });
         }
+
+        function addToMemory() {
+            const question = document.getElementById('memory-question').value;
+            fetch('/add_to_memory', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({question: question}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('memory-status').innerText = `Added. Memory bank size: ${data.memory_bank_size}`;
+                document.getElementById('memory-question').value = '';
+            });
+        }
+
+        function clearMemory() {
+            fetch('/clear_memory', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('memory-status').innerText = 'Memory bank cleared';
+            });
+        }
+
+        function startMemoryMode() {
+            fetch('/start_memory_mode', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('question-display').innerText = data.question;
+                    openTab(event, 'Calculator');
+                    updateMemoryModeUI(data.memory_mode);
+                } else {
+                    document.getElementById('memory-status').innerText = data.message;
+                }
+            });
+        }
+
+        function stopMemoryMode() {
+            fetch('/stop_memory_mode', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateMemoryModeUI(data.memory_mode);
+                document.getElementById('question-display').innerText = "Enter a question";
+            });
+        }
+
+        function updateMemoryModeUI(memoryMode) {
+            const enterButton = document.getElementById('enter');
+            if (memoryMode) {
+                enterButton.innerText = "Check";
+                document.getElementById('memory-status').innerText = "Memory Mode Active";
+            } else {
+                enterButton.innerText = "Enter";
+                document.getElementById('memory-status').innerText = "";
+            }
+        }
+
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // Open Calculator tab by default
+        document.getElementsByClassName("tablinks")[0].click();
+
+        // Check initial memory mode state
+        fetch('/get_memory_bank_size')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('memory-status').innerText = `Memory bank size: ${data.size}`;
+            });
     </script>
 </body>
 </html>
